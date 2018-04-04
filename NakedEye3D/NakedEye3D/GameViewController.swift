@@ -16,6 +16,8 @@ class GameViewController: UIViewController {
     fileprivate var session = AVCaptureSession()
     fileprivate var deviceInput: AVCaptureDeviceInput?
     fileprivate var previewLayer = AVCaptureVideoPreviewLayer()
+    fileprivate var cameraNode = SCNNode()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -23,7 +25,7 @@ class GameViewController: UIViewController {
         let scene = SCNScene(named: "art.scnassets/ship.scn")!
         
         // create and add a camera to the scene
-        let cameraNode = SCNNode()
+        
         cameraNode.camera = SCNCamera()
         scene.rootNode.addChildNode(cameraNode)
         
@@ -65,12 +67,11 @@ class GameViewController: UIViewController {
         // configure the view
         scnView.backgroundColor = UIColor.black
         
-        // add a tap gesture recognizer
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
-        scnView.addGestureRecognizer(tapGesture)
-        
-        
         addScaningVideo()
+        let preview = UIView(frame: CGRect(x: 0, y: 0, width: 100, height: 150))
+        view.addSubview(preview)
+        preview.layer.addSublayer(previewLayer)
+        previewLayer.frame = preview.frame
     }
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
@@ -78,41 +79,7 @@ class GameViewController: UIViewController {
         //停止扫描
         session.stopRunning()
     }
-    @objc
-    func handleTap(_ gestureRecognize: UIGestureRecognizer) {
-        // retrieve the SCNView
-        let scnView = self.view as! SCNView
-        
-        // check what nodes are tapped
-        let p = gestureRecognize.location(in: scnView)
-        let hitResults = scnView.hitTest(p, options: [:])
-        // check that we clicked on at least one object
-        if hitResults.count > 0 {
-            // retrieved the first clicked object
-            let result = hitResults[0]
-            
-            // get its material
-            let material = result.node.geometry!.firstMaterial!
-            
-            // highlight it
-            SCNTransaction.begin()
-            SCNTransaction.animationDuration = 0.5
-            
-            // on completion - unhighlight
-            SCNTransaction.completionBlock = {
-                SCNTransaction.begin()
-                SCNTransaction.animationDuration = 0.5
-                
-                material.emission.contents = UIColor.black
-                
-                SCNTransaction.commit()
-            }
-            
-            material.emission.contents = UIColor.red
-            
-            SCNTransaction.commit()
-        }
-    }
+    
     
     override var shouldAutorotate: Bool {
         return true
@@ -137,38 +104,38 @@ class GameViewController: UIViewController {
 
     fileprivate func addScaningVideo(){
         //1.获取输入设备（摄像头）
-        guard let device = AVCaptureDevice.default(for: .video) else { return }
+        guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front) else {return}
         
         //2.根据输入设备创建输入对象
         guard let deviceIn = try? AVCaptureDeviceInput(device: device) else { return }
         deviceInput = deviceIn
         
         //3.创建原数据的输出对象
-        let metadataOutput = AVCaptureMetadataOutput()
+        let videoDataOutput = AVCaptureVideoDataOutput()
         
         //4.设置代理监听输出对象输出的数据，在主线程中刷新
-        metadataOutput.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
+        videoDataOutput.setSampleBufferDelegate(self, queue: DispatchQueue.main)
         //4.2 设置输出代理
         
         
         //5.设置输出质量(高像素输出)
-        session.sessionPreset = .high
+        session.sessionPreset = .medium
         
         //6.添加输入和输出到会话
         if session.canAddInput(deviceInput!) {
             session.addInput(deviceInput!)
         }
-        if session.canAddOutput(metadataOutput) {
-            session.addOutput(metadataOutput)
+        if session.canAddOutput(videoDataOutput) {
+            session.addOutput(videoDataOutput)
         }
         
         //7.告诉输出对象要输出什么样的数据,识别人脸, 最多可识别10张人脸
-        metadataOutput.metadataObjectTypes = [.face]
-        
+        //metadataOutput.metadataObjectTypes = [.face]
+        videoDataOutput.alwaysDiscardsLateVideoFrames = true
         //8.创建预览图层
         previewLayer = AVCaptureVideoPreviewLayer(session: session)
         previewLayer.videoGravity = .resizeAspectFill
-        previewLayer.frame = view.bounds
+        
         
         
         //10. 开始扫描
@@ -181,15 +148,38 @@ class GameViewController: UIViewController {
 }
 
 //MARK: AV代理
-extension GameViewController: AVCaptureMetadataOutputObjectsDelegate {
+extension GameViewController: AVCaptureMetadataOutputObjectsDelegate,AVCaptureVideoDataOutputSampleBufferDelegate {
     func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
         for face in metadataObjects {
             let faceObj = face as? AVMetadataFaceObject
-            //            let faceID = faceObj?.faceID
-            //            let faceRollAngle = faceObj?.rollAngle
-            print(faceObj!)
+                        let faceID = faceObj?.faceID
+                        let faceRollAngle = faceObj?.rollAngle
+            print(faceObj!,faceID ?? 0,faceRollAngle ?? 0)
         }
         
         
+    }
+    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        let buffer = CMSampleBufferGetImageBuffer(sampleBuffer)
+        
+        let detectRequestHandler = VNImageRequestHandler(cvPixelBuffer: buffer!, options: [:])
+        // 创建处理requestHandler
+        
+        let request1 = VNDetectFaceRectanglesRequest { (request, error) in
+            
+            print(request.results!)
+            guard let observations = request.results as? [VNFaceObservation] else {return};
+            for faceservation in observations {
+                print(faceservation.boundingBox)
+            }
+        }
+        do {
+            try detectRequestHandler.perform([request1])
+        }catch{
+            //error异常对象
+            print(error)
+        }
+        
+        //print(request1.results!)
     }
 }
