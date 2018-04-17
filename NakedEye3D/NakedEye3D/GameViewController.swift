@@ -15,24 +15,18 @@ import Vision
 class GameViewController: UIViewController {
     fileprivate var session = AVCaptureSession()
     fileprivate var cameraNode = SCNNode()
-    fileprivate var previewLayer = AVCaptureVideoPreviewLayer()
     fileprivate var previewView = UIView()
+    fileprivate var rectLayer = CALayer()
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        //3D场景加载
         setScene()
-        
+        //视频开启
         addScaningVideo()
+        //预览界面
+        addPreview()
         
-        previewView = UIView(frame: CGRect(x: 0, y: 0, width: 100, height: 150))
-        view.addSubview(previewView)
-        //创建预览图层
-        previewLayer = AVCaptureVideoPreviewLayer(session: session)
-        previewLayer.videoGravity = .resizeAspectFill
-        
-        previewView.layer.addSublayer(previewLayer)
-        previewLayer.frame = previewView.bounds
     }
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
@@ -49,6 +43,7 @@ class GameViewController: UIViewController {
         super.didReceiveMemoryWarning()
         // Release any cached data, images, etc that aren't in use.
     }
+    
     fileprivate func setScene() {
         // create a new scene
         let scene = SCNScene(named: "art.scnassets/ship.scn")!
@@ -122,17 +117,30 @@ class GameViewController: UIViewController {
             }
         }
     }
+    
+    fileprivate func addPreview(){
+        //预览显示view
+        previewView.frame = CGRect(x: 0, y: 0, width: 100, height: 150)
+        view.addSubview(previewView)
+        //创建预览layer
+        let previewLayer = AVCaptureVideoPreviewLayer(session: session)
+        previewLayer.videoGravity = .resizeAspectFill
+        previewView.layer.addSublayer(previewLayer)
+        previewLayer.frame = previewView.bounds
+        
+        //识别方框
+        rectLayer.borderWidth = 2;
+        rectLayer.cornerRadius = 3;
+        rectLayer.borderColor = UIColor.red.cgColor;
+        rectLayer.isHidden = true
+        self.previewView.layer.addSublayer(rectLayer);
+    }
 }
 
 //MARK: AV代理
 extension GameViewController: AVCaptureVideoDataOutputSampleBufferDelegate,AVCaptureMetadataOutputObjectsDelegate {
     func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
-        //移除旧矩形框
-        for sublayer in self.previewView.layer.sublayers! {
-            if sublayer != self.previewLayer {
-                sublayer.removeFromSuperlayer()
-            }
-        }
+        
         for obj in metadataObjects {
             if obj.type == .face {
                 print("face---\(obj.bounds)")
@@ -144,15 +152,12 @@ extension GameViewController: AVCaptureVideoDataOutputSampleBufferDelegate,AVCap
                 let y = oldRect.origin.x * self.previewView.bounds.size.height;
                 
                 // 添加矩形
-                let testLayer = CALayer();
-                testLayer.borderWidth = 2;
-                testLayer.cornerRadius = 3;
-                testLayer.borderColor = UIColor.red.cgColor;
-                testLayer.frame = CGRect(x: x, y: y, width: w, height: h)
-                
-                self.previewView.layer.addSublayer(testLayer);
+                rectLayer.frame = CGRect(x: x, y: y, width: w, height: h)
+                rectLayer.isHidden = false
                 // 移动摄像机
                 self.cameraNode.simdPosition = float3(Float(oldRect.origin.y * 3), Float((1-oldRect.origin.x) * 3), Float( 20 ))
+            }else {
+                rectLayer.isHidden = true
             }
         }
     }
@@ -163,12 +168,6 @@ extension GameViewController: AVCaptureVideoDataOutputSampleBufferDelegate,AVCap
         
         guard let pixelBuffer: CVPixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
                 print("return"); return;
-        }
-        //移除旧矩形框
-        for sublayer in self.previewView.layer.sublayers! {
-            if sublayer != self.previewLayer {
-                sublayer.removeFromSuperlayer()
-            }
         }
         // 创建处理request回调
         let faceRequest = VNDetectFaceRectanglesRequest { (request2, error) in
@@ -185,17 +184,15 @@ extension GameViewController: AVCaptureVideoDataOutputSampleBufferDelegate,AVCap
                     let x = (1-oldRect.origin.x) * self.previewView.bounds.size.width - w;
                     let y = (1 - oldRect.origin.y) * self.previewView.bounds.size.height - h;
                     
-                    // 添加矩形
-                    let testLayer = CALayer();
-                    testLayer.borderWidth = 2;
-                    testLayer.cornerRadius = 3;
-                    testLayer.borderColor = UIColor.red.cgColor;
-                    testLayer.frame = CGRect(x: x, y: y, width: w, height: h)
-                    
-                    self.previewView.layer.addSublayer(testLayer);
+                    // 更新矩形
+                    self.rectLayer.frame = CGRect(x: x, y: y, width: w, height: h)
+                    self.rectLayer.isHidden = false
+
                     //移动摄像机
                     self.cameraNode.simdPosition = float3(Float((0.5-oldRect.origin.x) * 10), Float(oldRect.origin.y * 10), Float( 20 / oldRect.size.width) + 8)
                     
+                }else {
+                    self.rectLayer.isHidden = true
                 }
             }
         }
