@@ -16,10 +16,7 @@ class GameViewController: UIViewController {
     fileprivate var session = AVCaptureSession()
     fileprivate var cameraNode = SCNNode()
     fileprivate var previewLayer = AVCaptureVideoPreviewLayer()
-    fileprivate var previewView = { () -> UIView in
-        let preview = UIView(frame: CGRect(x: 0, y: 0, width: 100, height: 150))
-        return preview
-    }()
+    fileprivate var previewView = UIView()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -28,6 +25,7 @@ class GameViewController: UIViewController {
         
         addScaningVideo()
         
+        previewView = UIView(frame: CGRect(x: 0, y: 0, width: 100, height: 150))
         view.addSubview(previewView)
         //创建预览图层
         previewLayer = AVCaptureVideoPreviewLayer(session: session)
@@ -58,6 +56,7 @@ class GameViewController: UIViewController {
         // create and add a camera to the scene
         cameraNode.camera = SCNCamera()
         cameraNode.camera?.zFar = 500;
+        //cameraNode.camera?.usesOrthographicProjection = true
         scene.rootNode.addChildNode(cameraNode)
         
         // place the camera
@@ -72,14 +71,6 @@ class GameViewController: UIViewController {
         lightNode.position = SCNVector3(x: 0, y: 10, z: 10)
         scene.rootNode.addChildNode(lightNode)
         
-        // create and add an ambient light to the scene
-        let ambientLightNode = SCNNode()
-        ambientLightNode.light = SCNLight()
-        ambientLightNode.light!.type = .ambient
-        ambientLightNode.light!.color = UIColor.darkGray
-        scene.rootNode.addChildNode(ambientLightNode)
-        
-        
         // retrieve the SCNView
         let scnView = self.view as! SCNView
         
@@ -88,10 +79,10 @@ class GameViewController: UIViewController {
         
         // allows the user to manipulate the camera
         scnView.allowsCameraControl = false
-        
+        scnView.autoenablesDefaultLighting = true
         // show statistics such as fps and timing information
         scnView.showsStatistics = true
-        
+    
         // configure the view
         scnView.backgroundColor = UIColor.black
     }
@@ -102,13 +93,12 @@ class GameViewController: UIViewController {
         //2.根据输入设备创建输入对象
         guard let deviceIn = try? AVCaptureDeviceInput(device: device) else { return }
         
-        
-        //3.创建原数据的输出对象
+        //3.创建视频数据的输出对象(用于Vision框架人脸识别)
         let videoDataOutput = AVCaptureVideoDataOutput()
-        
-        //4.设置代理监听输出对象输出的数据，在主线程中刷新
         videoDataOutput.setSampleBufferDelegate(self, queue: DispatchQueue.main)
-        //4.2 设置输出代理
+        //4. 创建元数据的输出对象(用于AVFoundation框架人脸识别)
+        let metaDataOutput = AVCaptureMetadataOutput()
+        metaDataOutput.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
         
         //5.设置输出质量
         session.sessionPreset = .low
@@ -120,8 +110,12 @@ class GameViewController: UIViewController {
         if session.canAddOutput(videoDataOutput) {
             session.addOutput(videoDataOutput)
         }
-        
-        //10. 开始扫描
+        if session.canAddOutput(metaDataOutput) {
+            session.addOutput(metaDataOutput)
+        }
+        //7.AVFoundation框架识别类型
+        metaDataOutput.metadataObjectTypes = [.face]
+        //8. 开始扫描
         if !session.isRunning {
             DispatchQueue.global().async {
                 self.session.startRunning()
@@ -131,9 +125,42 @@ class GameViewController: UIViewController {
 }
 
 //MARK: AV代理
-extension GameViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
-    
+extension GameViewController: AVCaptureVideoDataOutputSampleBufferDelegate,AVCaptureMetadataOutputObjectsDelegate {
+    func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
+        //移除旧矩形框
+        for sublayer in self.previewView.layer.sublayers! {
+            if sublayer != self.previewLayer {
+                sublayer.removeFromSuperlayer()
+            }
+        }
+        for obj in metadataObjects {
+            if obj.type == .face {
+                print("face---\(obj.bounds)")
+                // 坐标转换
+                let oldRect = obj.bounds;
+                let w = oldRect.size.height * self.previewView.bounds.size.width;
+                let h = oldRect.size.width * self.previewView.bounds.size.height;
+                let x = oldRect.origin.y * self.previewView.bounds.size.width;
+                let y = oldRect.origin.x * self.previewView.bounds.size.height;
+                
+                // 添加矩形
+                let testLayer = CALayer();
+                testLayer.borderWidth = 2;
+                testLayer.cornerRadius = 3;
+                testLayer.borderColor = UIColor.red.cgColor;
+                testLayer.frame = CGRect(x: x, y: y, width: w, height: h)
+                
+                self.previewView.layer.addSublayer(testLayer);
+                // 移动摄像机
+                self.cameraNode.simdPosition = float3(Float(oldRect.origin.y * 3), Float((1-oldRect.origin.x) * 3), Float( 20 ))
+            }
+        }
+    }
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        //太卡了,先不用了...
+        return
+        
+        
         guard let pixelBuffer: CVPixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
                 print("return"); return;
         }
@@ -143,7 +170,7 @@ extension GameViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
                 sublayer.removeFromSuperlayer()
             }
         }
-        // 创建处理requestHandler
+        // 创建处理request回调
         let faceRequest = VNDetectFaceRectanglesRequest { (request2, error) in
             //print("results---\(request2.results)")
             guard let results = request2.results else {return}
@@ -151,7 +178,7 @@ extension GameViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
             for observation in results {
                 if let face = observation as? VNFaceObservation {
                     //print("face---\(face.boundingBox)==\(face.confidence)")
-                    
+                    // 坐标转换
                     let oldRect = face.boundingBox;
                     let w = oldRect.size.width * self.previewView.bounds.size.width;
                     let h = oldRect.size.height * self.previewView.bounds.size.height;
@@ -166,15 +193,17 @@ extension GameViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
                     testLayer.frame = CGRect(x: x, y: y, width: w, height: h)
                     
                     self.previewView.layer.addSublayer(testLayer);
+                    //移动摄像机
+                    self.cameraNode.simdPosition = float3(Float((0.5-oldRect.origin.x) * 10), Float(oldRect.origin.y * 10), Float( 20 / oldRect.size.width) + 8)
                     
-                    
-                    self.cameraNode.position = SCNVector3Make(Float((0.5-oldRect.origin.x) * 10), Float(oldRect.origin.y * 10), Float( 20 / oldRect.size.width) + 8)
                 }
             }
         }
 
+        // 创建Handler
         let detectFaceRequestHandler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: .right, options: [:])
         
+        // 开始识别
         do {
             try detectFaceRequestHandler.perform([faceRequest])
         } catch  {
