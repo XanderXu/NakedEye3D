@@ -162,9 +162,9 @@ extension GameViewController: AVCaptureVideoDataOutputSampleBufferDelegate,AVCap
                 rectLayer.frame = CGRect(x: x, y: y, width: w, height: h)
                 rectLayer.isHidden = false
                 
-                
-                let cameraX = (oldRect.origin.y - 0.3) * 3
-                let cameraY = (0.8 - oldRect.origin.x) * 3
+                //凑出合理的数据
+                let cameraX = (oldRect.origin.y - 0.3) * 2
+                let cameraY = (0.4 - oldRect.origin.x) * 2
                 // 移动摄像机
                 self.cameraNode.position = SCNVector3(cameraX, cameraY, 20)
             }else {
