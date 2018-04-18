@@ -47,7 +47,7 @@ class GameViewController: UIViewController {
     fileprivate func setScene() {
         // create a new scene
         let scene = SCNScene(named: "art.scnassets/ship.scn")!
-        let ship = scene.rootNode.childNode(withName: "ship", recursively: true)
+        let ship = scene.rootNode.childNode(withName: "endBox", recursively: true)
         // create and add a camera to the scene
         cameraNode.camera = SCNCamera()
         cameraNode.camera?.zFar = 500;
@@ -55,7 +55,7 @@ class GameViewController: UIViewController {
         scene.rootNode.addChildNode(cameraNode)
         
         // place the camera
-        cameraNode.position = SCNVector3(x: 0, y: 0, z: 9)
+        cameraNode.position = SCNVector3(x: 0, y: 0, z: 20)
         let constraint = SCNLookAtConstraint(target: ship)
         cameraNode.constraints = [constraint]
 
@@ -63,9 +63,16 @@ class GameViewController: UIViewController {
         let lightNode = SCNNode()
         lightNode.light = SCNLight()
         lightNode.light!.type = .omni
-        lightNode.position = SCNVector3(x: 0, y: 10, z: 10)
+        lightNode.position = SCNVector3(x: 0, y: 0, z: 15)
         scene.rootNode.addChildNode(lightNode)
         
+        
+        let lightNode2 = SCNNode()
+        lightNode2.light = SCNLight()
+        lightNode2.light!.type = .ambient
+        lightNode2.light?.color = UIColor.gray
+        lightNode2.position = SCNVector3(x: 0, y: 0, z: 15)
+        scene.rootNode.addChildNode(lightNode2)
         // retrieve the SCNView
         let scnView = self.view as! SCNView
         
@@ -74,7 +81,7 @@ class GameViewController: UIViewController {
         
         // allows the user to manipulate the camera
         scnView.allowsCameraControl = false
-        scnView.autoenablesDefaultLighting = true
+        //scnView.autoenablesDefaultLighting = true
         // show statistics such as fps and timing information
         scnView.showsStatistics = true
     
@@ -154,8 +161,12 @@ extension GameViewController: AVCaptureVideoDataOutputSampleBufferDelegate,AVCap
                 // 添加矩形
                 rectLayer.frame = CGRect(x: x, y: y, width: w, height: h)
                 rectLayer.isHidden = false
+                
+                
+                let cameraX = (oldRect.origin.y - 0.3) * 3
+                let cameraY = (0.8 - oldRect.origin.x) * 3
                 // 移动摄像机
-                self.cameraNode.simdPosition = float3(Float(oldRect.origin.y * 3), Float((1-oldRect.origin.x) * 3), Float( 20 ))
+                self.cameraNode.position = SCNVector3(cameraX, cameraY, 20)
             }else {
                 rectLayer.isHidden = true
             }
