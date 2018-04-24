@@ -17,6 +17,7 @@ class GameViewController: UIViewController {
     fileprivate var cameraNode = SCNNode()
     fileprivate var previewView = UIView()
     fileprivate var rectLayer = CALayer()
+    fileprivate var sceneSkin:SCNMaterial?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -51,6 +52,7 @@ class GameViewController: UIViewController {
         // create and add a camera to the scene
         cameraNode.camera = SCNCamera()
         cameraNode.camera?.zFar = 500;
+        cameraNode.camera?.zNear = 1;
         //cameraNode.camera?.usesOrthographicProjection = true
         scene.rootNode.addChildNode(cameraNode)
         
@@ -87,6 +89,21 @@ class GameViewController: UIViewController {
     
         // configure the view
         scnView.backgroundColor = UIColor.black
+        
+//        let skin = ship?.geometry?.firstMaterial
+//        sceneSkin = skin
+//        let geometryShader = """
+//        #pragma arguments
+//        float FactorX;
+//        float FactorY;
+//        #pragma body
+//        _geometry.position.x += _geometry.normal.x * FactorX;
+//        _geometry.position.y += _geometry.normal.y * FactorY;
+//        """
+//        skin?.shaderModifiers = [SCNShaderModifierEntryPoint.geometry: geometryShader]
+//
+//        skin?.setValue(0, forKey: "FactorX")
+//        skin?.setValue(0, forKey: "FactorY")
     }
     fileprivate func addScaningVideo(){
         //1.获取输入设备（摄像头）
@@ -146,6 +163,7 @@ class GameViewController: UIViewController {
 
 //MARK: AV代理
 extension GameViewController: AVCaptureVideoDataOutputSampleBufferDelegate,AVCaptureMetadataOutputObjectsDelegate {
+    //AV框架人脸识别
     func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
         
         for obj in metadataObjects {
@@ -162,16 +180,27 @@ extension GameViewController: AVCaptureVideoDataOutputSampleBufferDelegate,AVCap
                 rectLayer.frame = CGRect(x: x, y: y, width: w, height: h)
                 rectLayer.isHidden = false
                 
-                //凑出合理的数据
-                let cameraX = (oldRect.origin.y - 0.3) * 2
-                let cameraY = (0.4 - oldRect.origin.x) * 2
-                // 移动摄像机
-                self.cameraNode.position = SCNVector3(cameraX, cameraY, 20)
+                // 大致凑出合理的数据
+                let cameraX:Float  = Float((oldRect.origin.y - 0.3) * 2)
+                let cameraY:Float = Float((0.4 - oldRect.origin.x) * 2)
+                
+                // 移动摄像机,使用默认的**透视投影**(普通平头截体)
+                let zNumber:Float = 20.0
+                self.cameraNode.position = SCNVector3(cameraX, cameraY, zNumber)
+                
+//                self.sceneSkin?.setValue(cameraX*0.5, forKey: "FactorX")
+//                self.sceneSkin?.setValue(cameraY*0.5, forKey: "FactorY")
+                // 改变投影矩阵,使用**离轴投影**（非对称相机平截头体）
+                //self.cameraNode.camera?.projectionTransform = SCNMatrix4Mult(SCNMatrix4MakeScale(0.5, 0.5, 0.5),SCNMatrix4Mult(SCNMatrix4MakeRotation(atan(cameraY/zNumber), 1, atan(cameraX/zNumber)/atan(cameraY/zNumber), 0), SCNMatrix4MakeTranslation(cameraX, cameraY, zNumber)))
             }else {
                 rectLayer.isHidden = true
             }
         }
     }
+    
+    
+    
+    //使用Vision
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         //太卡了,先不用了...
         return
