@@ -81,13 +81,13 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         
         let near = -close.z
         
-        let scaleFactor:Float = 0.01/near
+        let scaleFactor:Float = 6//0.01/near
         let left = (phonePInEye.x-0.031)*scaleFactor
         let right = (phonePInEye.x+0.031)*scaleFactor
         let bottom = (phonePInEye.y-0.135)*scaleFactor
         let top = (phonePInEye.y+0)*scaleFactor
         
-        let perspectiveM = SCNMatrix4(perspectiveOffCenter(left:left , right:right , bottom:bottom , top:top , near: near, far: 10))
+        let perspectiveM = SCNMatrix4(perspectiveOffCenter(left:left , right:right , bottom:bottom , top:top , near: near, far: 100))
         
         demoView.pointOfView?.camera?.projectionTransform = perspectiveM
     }
