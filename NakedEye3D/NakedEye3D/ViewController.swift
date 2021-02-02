@@ -8,7 +8,7 @@
 import UIKit
 import SceneKit
 import ARKit
-
+import DeviceKit
 class ViewController: UIViewController, ARSCNViewDelegate {
 
     @IBOutlet var sceneView: ARSCNView!
@@ -17,7 +17,15 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     
     
     var shipNode:SCNNode?
-    
+    lazy var deviceSize: simd_float2 = {
+        let width = Device.current.screenRatio.width
+        let height = Device.current.screenRatio.height
+        let sinx = height/sqrt(width*width + height*height)
+        let cosx = width/sqrt(width*width + height*height)
+        let diagonalCm = Device.current.diagonal * 0.0254//米
+        let deviceSize = simd_float2(Float(diagonalCm * cosx), Float(diagonalCm * sinx))
+        return deviceSize
+    }()
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -81,10 +89,10 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         
         let near = -close.z
         
-        let scaleFactor:Float = 6//0.01/near
-        let left = (phonePInEye.x-0.031)*scaleFactor
-        let right = (phonePInEye.x+0.031)*scaleFactor
-        let bottom = (phonePInEye.y-0.135)*scaleFactor
+        let scaleFactor:Float = 1//0.01/near
+        let left = (phonePInEye.x-deviceSize.x*0.5)*scaleFactor
+        let right = (phonePInEye.x+deviceSize.x*0.5)*scaleFactor
+        let bottom = (phonePInEye.y-deviceSize.y)*scaleFactor
         let top = (phonePInEye.y+0)*scaleFactor
         
         let perspectiveM = SCNMatrix4(perspectiveOffCenter(left:left , right:right , bottom:bottom , top:top , near: near, far: 100))

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0E0E9DBC1DE0491CBAB7FF79 /* Pods_NakedEye3D.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E5F1127D8E66F49D3E883C0B /* Pods_NakedEye3D.framework */; };
 		6C1453A120595F8300E7C7E7 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C1453A020595F8300E7C7E7 /* AppDelegate.swift */; };
 		6C1453A320595F8300E7C7E7 /* art.scnassets in Resources */ = {isa = PBXBuildFile; fileRef = 6C1453A220595F8300E7C7E7 /* art.scnassets */; };
 		6C1453AA20595F8300E7C7E7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6C1453A920595F8300E7C7E7 /* Assets.xcassets */; };
@@ -16,6 +17,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		29BB4B6F2A43C76BE7C2F008 /* Pods-NakedEye3D.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-NakedEye3D.debug.xcconfig"; path = "Target Support Files/Pods-NakedEye3D/Pods-NakedEye3D.debug.xcconfig"; sourceTree = "<group>"; };
+		3F10B2DA22F54AC522F1909A /* Pods-NakedEye3D.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-NakedEye3D.release.xcconfig"; path = "Target Support Files/Pods-NakedEye3D/Pods-NakedEye3D.release.xcconfig"; sourceTree = "<group>"; };
 		6C14539D20595F8300E7C7E7 /* NakedEye3D.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NakedEye3D.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6C1453A020595F8300E7C7E7 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		6C1453A220595F8300E7C7E7 /* art.scnassets */ = {isa = PBXFileReference; lastKnownFileType = wrapper.scnassets; path = art.scnassets; sourceTree = "<group>"; };
@@ -24,6 +27,7 @@
 		6C1453AE20595F8300E7C7E7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		6C52313725A44ABF0099C7B8 /* Main.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };
 		6C52313825A44ABF0099C7B8 /* ViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		E5F1127D8E66F49D3E883C0B /* Pods_NakedEye3D.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_NakedEye3D.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -31,17 +35,30 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0E0E9DBC1DE0491CBAB7FF79 /* Pods_NakedEye3D.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		4C684C0B7FDBBB440F9AFA86 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				29BB4B6F2A43C76BE7C2F008 /* Pods-NakedEye3D.debug.xcconfig */,
+				3F10B2DA22F54AC522F1909A /* Pods-NakedEye3D.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
+			sourceTree = "<group>";
+		};
 		6C14539420595F8300E7C7E7 = {
 			isa = PBXGroup;
 			children = (
 				6C14539F20595F8300E7C7E7 /* NakedEye3D */,
 				6C14539E20595F8300E7C7E7 /* Products */,
+				4C684C0B7FDBBB440F9AFA86 /* Pods */,
+				F8C8F150D64F578F0C8A38C3 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -67,6 +84,14 @@
 			path = NakedEye3D;
 			sourceTree = "<group>";
 		};
+		F8C8F150D64F578F0C8A38C3 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				E5F1127D8E66F49D3E883C0B /* Pods_NakedEye3D.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -74,9 +99,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 6C1453B120595F8300E7C7E7 /* Build configuration list for PBXNativeTarget "NakedEye3D" */;
 			buildPhases = (
+				34BF403FE16BB66EFE540BE3 /* [CP] Check Pods Manifest.lock */,
 				6C14539920595F8300E7C7E7 /* Sources */,
 				6C14539A20595F8300E7C7E7 /* Frameworks */,
 				6C14539B20595F8300E7C7E7 /* Resources */,
+				04AC51D36C0D34B573A1C807 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -134,6 +161,49 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		04AC51D36C0D34B573A1C807 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-NakedEye3D/Pods-NakedEye3D-frameworks.sh",
+				"${BUILT_PRODUCTS_DIR}/DeviceKit/DeviceKit.framework",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/DeviceKit.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-NakedEye3D/Pods-NakedEye3D-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		34BF403FE16BB66EFE540BE3 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-NakedEye3D-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		6C14539920595F8300E7C7E7 /* Sources */ = {
@@ -268,6 +338,7 @@
 		};
 		6C1453B220595F8300E7C7E7 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 29BB4B6F2A43C76BE7C2F008 /* Pods-NakedEye3D.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
@@ -283,6 +354,7 @@
 		};
 		6C1453B320595F8300E7C7E7 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 3F10B2DA22F54AC522F1909A /* Pods-NakedEye3D.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
