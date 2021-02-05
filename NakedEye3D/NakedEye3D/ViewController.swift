@@ -14,15 +14,17 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     @IBOutlet var sceneView: ARSCNView!
     
     @IBOutlet weak var demoView: SCNView!
+    private var perspectiveM:SCNMatrix4?
     
     
-    var shipNode:SCNNode?
     lazy var deviceSize: simd_float2 = {
-        let width = Device.current.screenRatio.width
-        let height = Device.current.screenRatio.height
-        let sinx = height/sqrt(width*width + height*height)
-        let cosx = width/sqrt(width*width + height*height)
-        let diagonalCm = Device.current.diagonal * 0.0254//米
+        let px = UIScreen.main.nativeBounds.size
+        let diagonalPx = sqrt(px.width*px.width + px.height*px.height)
+        let sinx = px.height/diagonalPx
+        let cosx = px.width/diagonalPx
+        
+        let ppi = CGFloat(Device.current.ppi ?? 0)
+        let diagonalCm = diagonalPx / ppi * 0.0254
         let deviceSize = simd_float2(Float(diagonalCm * cosx), Float(diagonalCm * sinx))
         return deviceSize
     }()
@@ -33,15 +35,16 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         sceneView.delegate = self
         // Show statistics such as fps and timing information
         sceneView.showsStatistics = true
+        // Set the scene to the view
+        sceneView.scene = SCNScene()
+        sceneView.debugOptions = [.showWorldOrigin]
         
         // Create a new scene
         let scene = SCNScene(named: "art.scnassets/ship.scn")!
         demoView.scene = scene
+        demoView.delegate = self
         demoView.isPlaying = true
         demoView.pointOfView?.simdPosition = simd_float3.zero
-        shipNode = scene.rootNode.childNode(withName: "ship", recursively: true)
-        // Set the scene to the view
-        sceneView.scene = SCNScene()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -62,7 +65,11 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     }
 
     // MARK: - ARSCNViewDelegate
-    
+    func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
+        if renderer === demoView, let perspectiveM = perspectiveM {
+            demoView.pointOfView?.camera?.projectionTransform = perspectiveM
+        }
+    }
 
     // Override to create and configure nodes for anchors added to the view's session.
     func renderer(_ renderer: SCNSceneRenderer, nodeFor anchor: ARAnchor) -> SCNNode? {
@@ -95,9 +102,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         let bottom = (phonePInEye.y-deviceSize.y)*scaleFactor
         let top = (phonePInEye.y+0)*scaleFactor
         
-        let perspectiveM = SCNMatrix4(perspectiveOffCenter(left:left , right:right , bottom:bottom , top:top , near: near, far: 100))
-        
-        demoView.pointOfView?.camera?.projectionTransform = perspectiveM
+        perspectiveM = SCNMatrix4(perspectiveOffCenter(left:left , right:right , bottom:bottom , top:top , near: near, far: 10))
     }
     
     func session(_ session: ARSession, didFailWithError error: Error) {
@@ -134,5 +139,32 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         
         return m;
       }
-
+    /*
+     // look opposite direction of device cam
+     Quaternion q = deviceCamera.transform.rotation * Quaternion.Euler(Vector3.up * 180);
+     eyeCamera.transform.rotation = q;
+     
+     Vector3 deviceCamPos = eyeCamera.transform.worldToLocalMatrix.MultiplyPoint( deviceCamera.transform.position ); // find device camera in rendering camera's view space
+     Vector3 fwd = eyeCamera.transform.worldToLocalMatrix.MultiplyVector (deviceCamera.transform.forward); // normal of plane defined by device camera
+     Plane device_plane = new Plane( fwd, deviceCamPos);
+     
+     Vector3 close = device_plane.ClosestPointOnPlane (Vector3.zero);
+     near = close.magnitude;
+     
+     // couldn't get device orientation to work properly in all cases, so just landscape for now (it's just the UI that is locked to landscape, everyting else works just fine)
+     /*if (Screen.orientation == ScreenOrientation.Portrait) {
+     left = trackedCamPos.x - 0.040f; // portrait iphone X
+     right = trackedCamPos.x + 0.022f;
+     top = trackedCamPos.y + 0.000f;
+     bottom = trackedCamPos.y - 0.135f;
+     } else {*/
+     
+     // landscape iPhone X, measures in meters
+     left = deviceCamPos.x - 0.000f;
+     right = deviceCamPos.x + 0.135f;
+     top = deviceCamPos.y + 0.022f;
+     bottom = deviceCamPos.y - 0.040f;
+     
+     far = 10f; // may need bigger for bigger scenes, max 10 metres for now
+     */
 }
