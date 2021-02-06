@@ -15,7 +15,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     
     @IBOutlet weak var demoView: SCNView!
     private var perspectiveM:SCNMatrix4?
-    
+    //private var eyePositionInPhone:simd_float3?
     
     lazy var deviceSize: simd_float2 = {
         let px = UIScreen.main.nativeBounds.size
@@ -46,9 +46,37 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         demoView.isPlaying = true
         demoView.pointOfView?.simdPosition = simd_float3.zero
         
+        addWalls()
+        addBricks()
+    }
+    func addBricks() {
         
     }
-    
+    func addWalls() {
+        let depth:Float = 1
+        let box = SCNBox(width: 1, height: 1, length: 1, chamferRadius: 0)
+        box.firstMaterial?.diffuse.contents = UIColor.green
+        
+        let left = SCNNode(geometry: box)
+        left.simdScale = simd_float3(0.01, deviceSize.y, depth)
+        left.simdPosition = simd_float3(-deviceSize.x*0.5, 0, -depth*0.5)
+        demoView.scene?.rootNode.addChildNode(left)
+        
+        let right = SCNNode(geometry: box)
+        right.simdScale = simd_float3(0.01, deviceSize.y, depth)
+        right.simdPosition = simd_float3(deviceSize.x*0.5, 0, -depth*0.5)
+        demoView.scene?.rootNode.addChildNode(right)
+        
+        let top = SCNNode(geometry: box)
+        top.simdScale = simd_float3(deviceSize.x, 0.01, depth)
+        top.simdPosition = simd_float3(0, deviceSize.y*0.5, -depth*0.5)
+        demoView.scene?.rootNode.addChildNode(top)
+        
+        let bottom = SCNNode(geometry: box)
+        bottom.simdScale = simd_float3(deviceSize.x, 0.01, depth)
+        bottom.simdPosition = simd_float3(0, -deviceSize.y*0.5, -depth*0.5)
+        demoView.scene?.rootNode.addChildNode(bottom)
+    }
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
@@ -69,6 +97,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     // MARK: - ARSCNViewDelegate
     func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
         if renderer === demoView, let perspectiveM = perspectiveM {
+//            demoView.pointOfView?.simdPosition = eyePositionInPhone
             demoView.pointOfView?.camera?.projectionTransform = perspectiveM
         }
     }
@@ -140,32 +169,5 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         
         return m;
       }
-    /*
-     // look opposite direction of device cam
-     Quaternion q = deviceCamera.transform.rotation * Quaternion.Euler(Vector3.up * 180);
-     eyeCamera.transform.rotation = q;
-     
-     Vector3 deviceCamPos = eyeCamera.transform.worldToLocalMatrix.MultiplyPoint( deviceCamera.transform.position ); // find device camera in rendering camera's view space
-     Vector3 fwd = eyeCamera.transform.worldToLocalMatrix.MultiplyVector (deviceCamera.transform.forward); // normal of plane defined by device camera
-     Plane device_plane = new Plane( fwd, deviceCamPos);
-     
-     Vector3 close = device_plane.ClosestPointOnPlane (Vector3.zero);
-     near = close.magnitude;
-     
-     // couldn't get device orientation to work properly in all cases, so just landscape for now (it's just the UI that is locked to landscape, everyting else works just fine)
-     /*if (Screen.orientation == ScreenOrientation.Portrait) {
-     left = trackedCamPos.x - 0.040f; // portrait iphone X
-     right = trackedCamPos.x + 0.022f;
-     top = trackedCamPos.y + 0.000f;
-     bottom = trackedCamPos.y - 0.135f;
-     } else {*/
-     
-     // landscape iPhone X, measures in meters
-     left = deviceCamPos.x - 0.000f;
-     right = deviceCamPos.x + 0.135f;
-     top = deviceCamPos.y + 0.022f;
-     bottom = deviceCamPos.y - 0.040f;
-     
-     far = 10f; // may need bigger for bigger scenes, max 10 metres for now
-     */
+    
 }
