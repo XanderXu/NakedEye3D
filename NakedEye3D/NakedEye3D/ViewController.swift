@@ -45,6 +45,8 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         demoView.delegate = self
         demoView.isPlaying = true
         demoView.pointOfView?.simdPosition = simd_float3.zero
+        
+        
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -74,7 +76,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     // Override to create and configure nodes for anchors added to the view's session.
     func renderer(_ renderer: SCNSceneRenderer, nodeFor anchor: ARAnchor) -> SCNNode? {
         let node = SCNNode()
-        node.geometry = SCNBox(width: 0.1, height: 0.1, length: 0.1, chamferRadius: 0)
+        node.geometry = SCNBox(width: 0.05, height: 0.05, length: 0.05, chamferRadius: 0)
         if anchor is ARFaceAnchor {
             node.geometry?.firstMaterial?.diffuse.contents = UIColor.red
         } else {
@@ -84,25 +86,24 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     }
     func renderer(_ renderer: SCNSceneRenderer, didUpdate node: SCNNode, for anchor: ARAnchor) {
         
-        guard let phoneT = renderer.pointOfView?.simdTransform else {
+        guard let phoneT = renderer.pointOfView?.simdTransform, anchor is ARFaceAnchor else {
             return
         }
         let eyeT = anchor.transform * matrix_float4x4(simd_quatf(angle: Float.pi, axis: SIMD3<Float>(0, 1, 0)))
         
         let phoneTInEye = eyeT.inverse * phoneT
-        let phonePInEye = phoneTInEye.columns.3
         
         let close = (phoneT.inverse * anchor.transform).columns.3
-        
         let near = -close.z
         
-        let scaleFactor:Float = 1//0.01/near
+        let phonePInEye = phoneTInEye.columns.3
+        let scaleFactor:Float = 0.01/near
         let left = (phonePInEye.x-deviceSize.x*0.5)*scaleFactor
         let right = (phonePInEye.x+deviceSize.x*0.5)*scaleFactor
         let bottom = (phonePInEye.y-deviceSize.y)*scaleFactor
         let top = (phonePInEye.y+0)*scaleFactor
         
-        perspectiveM = SCNMatrix4(perspectiveOffCenter(left:left , right:right , bottom:bottom , top:top , near: near, far: 10))
+        perspectiveM = SCNMatrix4(perspectiveOffCenter(left:left , right:right , bottom:bottom , top:top , near: near, far: 20))
     }
     
     func session(_ session: ARSession, didFailWithError error: Error) {
