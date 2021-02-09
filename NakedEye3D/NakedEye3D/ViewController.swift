@@ -15,7 +15,6 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     
     @IBOutlet weak var demoView: SCNView!
     private var perspectiveM:SCNMatrix4?
-    //private var eyePositionInPhone:simd_float3?
     
     lazy var deviceSize: simd_float2 = {
         let px = UIScreen.main.nativeBounds.size
@@ -50,29 +49,45 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         addBricks()
     }
     func addBricks() {
+        let depth:Float = 0.2
+        let box = SCNBox(width: 1, height: 1, length: 1, chamferRadius: 0)
+        box.firstMaterial?.diffuse.contents = UIImage(named: "texture")
         
+//        for i in 0..<3 {
+//            for j in 0..<5 {
+//                let brick = SCNNode(geometry: box)
+//                brick.name = "\(i),\(j)"
+//                brick.simdScale = simd_float3(0.01, 0.01, 0.02*Float(i))
+//                brick.simdPosition = simd_float3(-deviceSize.x*0.5, 0, (0.02-depth)*0.5)
+//                demoView.scene?.rootNode.addChildNode(brick)
+//            }
+//        }
     }
     func addWalls() {
-        let depth:Float = 1
+        let depth:Float = 0.2
         let box = SCNBox(width: 1, height: 1, length: 1, chamferRadius: 0)
         box.firstMaterial?.diffuse.contents = UIColor.green
         
         let left = SCNNode(geometry: box)
+        left.name = "left"
         left.simdScale = simd_float3(0.01, deviceSize.y, depth)
         left.simdPosition = simd_float3(-deviceSize.x*0.5, 0, -depth*0.5)
         demoView.scene?.rootNode.addChildNode(left)
         
         let right = SCNNode(geometry: box)
+        right.name = "right"
         right.simdScale = simd_float3(0.01, deviceSize.y, depth)
         right.simdPosition = simd_float3(deviceSize.x*0.5, 0, -depth*0.5)
         demoView.scene?.rootNode.addChildNode(right)
         
         let top = SCNNode(geometry: box)
+        top.name = "top"
         top.simdScale = simd_float3(deviceSize.x, 0.01, depth)
         top.simdPosition = simd_float3(0, deviceSize.y*0.5, -depth*0.5)
         demoView.scene?.rootNode.addChildNode(top)
         
         let bottom = SCNNode(geometry: box)
+        bottom.name = "bottom"
         bottom.simdScale = simd_float3(deviceSize.x, 0.01, depth)
         bottom.simdPosition = simd_float3(0, -deviceSize.y*0.5, -depth*0.5)
         demoView.scene?.rootNode.addChildNode(bottom)
@@ -97,7 +112,6 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     // MARK: - ARSCNViewDelegate
     func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
         if renderer === demoView, let perspectiveM = perspectiveM {
-//            demoView.pointOfView?.simdPosition = eyePositionInPhone
             demoView.pointOfView?.camera?.projectionTransform = perspectiveM
         }
     }
@@ -114,25 +128,25 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         return node
     }
     func renderer(_ renderer: SCNSceneRenderer, didUpdate node: SCNNode, for anchor: ARAnchor) {
-        
-        guard let phoneT = renderer.pointOfView?.simdTransform, anchor is ARFaceAnchor else {
+        guard let phoneT = renderer.pointOfView?.simdTransform, let faceAnchor = anchor as? ARFaceAnchor else {
             return
         }
-        let eyeT = anchor.transform * matrix_float4x4(simd_quatf(angle: Float.pi, axis: SIMD3<Float>(0, 1, 0)))
+        let eyeT = faceAnchor.transform * matrix_float4x4(simd_quatf(angle: Float.pi, axis: SIMD3<Float>(0, 1, 0)))
         
         let phoneTInEye = eyeT.inverse * phoneT
         
-        let close = (phoneT.inverse * anchor.transform).columns.3
-        let near = -close.z
+        let faceInPhone = (phoneT.inverse * faceAnchor.transform).columns.3
+        let near = -faceInPhone.z
         
         let phonePInEye = phoneTInEye.columns.3
-        let scaleFactor:Float = 0.01/near
+        let scaleNear:Float = 0.01
+        let scaleFactor:Float = scaleNear/near
         let left = (phonePInEye.x-deviceSize.x*0.5)*scaleFactor
         let right = (phonePInEye.x+deviceSize.x*0.5)*scaleFactor
         let bottom = (phonePInEye.y-deviceSize.y)*scaleFactor
         let top = (phonePInEye.y+0)*scaleFactor
         
-        perspectiveM = SCNMatrix4(perspectiveOffCenter(left:left , right:right , bottom:bottom , top:top , near: near, far: 20))
+        perspectiveM = SCNMatrix4(perspectiveOffCenter(left:left , right:right , bottom:bottom , top:top , near: scaleNear, far: 10))
     }
     
     func session(_ session: ARSession, didFailWithError error: Error) {
@@ -169,5 +183,32 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         
         return m;
       }
-    
+    /*
+     // look opposite direction of device cam
+     Quaternion q = deviceCamera.transform.rotation * Quaternion.Euler(Vector3.up * 180);
+     eyeCamera.transform.rotation = q;
+     
+     Vector3 deviceCamPos = eyeCamera.transform.worldToLocalMatrix.MultiplyPoint( deviceCamera.transform.position ); // find device camera in rendering camera's view space
+     Vector3 fwd = eyeCamera.transform.worldToLocalMatrix.MultiplyVector (deviceCamera.transform.forward); // normal of plane defined by device camera
+     Plane device_plane = new Plane( fwd, deviceCamPos);
+     
+     Vector3 close = device_plane.ClosestPointOnPlane (Vector3.zero);
+     near = close.magnitude;
+     
+     // couldn't get device orientation to work properly in all cases, so just landscape for now (it's just the UI that is locked to landscape, everyting else works just fine)
+     /*if (Screen.orientation == ScreenOrientation.Portrait) {
+     left = trackedCamPos.x - 0.040f; // portrait iphone X
+     right = trackedCamPos.x + 0.022f;
+     top = trackedCamPos.y + 0.000f;
+     bottom = trackedCamPos.y - 0.135f;
+     } else {*/
+     
+     // landscape iPhone X, measures in meters
+     left = deviceCamPos.x - 0.000f;
+     right = deviceCamPos.x + 0.135f;
+     top = deviceCamPos.y + 0.022f;
+     bottom = deviceCamPos.y - 0.040f;
+     
+     far = 10f; // may need bigger for bigger scenes, max 10 metres for now
+     */
 }
