@@ -183,6 +183,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         
         return m;
       }
+//    https://github.com/algomystic/TheParallaxView
     /*
      // look opposite direction of device cam
      Quaternion q = deviceCamera.transform.rotation * Quaternion.Euler(Vector3.up * 180);
@@ -195,13 +196,6 @@ class ViewController: UIViewController, ARSCNViewDelegate {
      Vector3 close = device_plane.ClosestPointOnPlane (Vector3.zero);
      near = close.magnitude;
      
-     // couldn't get device orientation to work properly in all cases, so just landscape for now (it's just the UI that is locked to landscape, everyting else works just fine)
-     /*if (Screen.orientation == ScreenOrientation.Portrait) {
-     left = trackedCamPos.x - 0.040f; // portrait iphone X
-     right = trackedCamPos.x + 0.022f;
-     top = trackedCamPos.y + 0.000f;
-     bottom = trackedCamPos.y - 0.135f;
-     } else {*/
      
      // landscape iPhone X, measures in meters
      left = deviceCamPos.x - 0.000f;
