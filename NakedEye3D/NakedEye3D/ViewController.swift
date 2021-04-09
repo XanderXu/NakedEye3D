@@ -149,7 +149,8 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         let top = (phonePInEye.y+0)*scaleFactor
         
         perspectiveM = SCNMatrix4(perspectiveOffCenter(left:left, right:right, bottom:bottom, top:top, near: scaleNear, far: 10))
-        eyeTransform = phoneT.inverse * eyeT
+        eyeTransform = phoneT * matrix_float4x4(simd_quatf(angle: Float.pi, axis: SIMD3<Float>(0, 1, 0)))
+        eyeTransform?.columns.3 = phonePInEye
     }
     
     func session(_ session: ARSession, didFailWithError error: Error) {
