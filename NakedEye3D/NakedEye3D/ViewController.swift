@@ -15,6 +15,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     
     @IBOutlet weak var demoView: SCNView!
     private var perspectiveM:SCNMatrix4?
+    private var eyeTransform:simd_float4x4?
     
     lazy var deviceSize: simd_float2 = {
         let px = UIScreen.main.nativeBounds.size
@@ -111,7 +112,8 @@ class ViewController: UIViewController, ARSCNViewDelegate {
 
     // MARK: - ARSCNViewDelegate
     func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
-        if renderer === demoView, let perspectiveM = perspectiveM {
+        if renderer === demoView, let perspectiveM = perspectiveM, let eyeT = eyeTransform {
+            demoView.pointOfView?.simdTransform = eyeT
             demoView.pointOfView?.camera?.projectionTransform = perspectiveM
         }
     }
@@ -146,7 +148,8 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         let bottom = (phonePInEye.y-deviceSize.y)*scaleFactor
         let top = (phonePInEye.y+0)*scaleFactor
         
-        perspectiveM = SCNMatrix4(perspectiveOffCenter(left:left , right:right , bottom:bottom , top:top , near: scaleNear, far: 10))
+        perspectiveM = SCNMatrix4(perspectiveOffCenter(left:left, right:right, bottom:bottom, top:top, near: scaleNear, far: 10))
+        eyeTransform = phoneT.inverse * eyeT
     }
     
     func session(_ session: ARSession, didFailWithError error: Error) {
