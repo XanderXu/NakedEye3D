@@ -15,7 +15,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     
     @IBOutlet weak var demoView: SCNView!
     private var perspectiveM:SCNMatrix4?
-    private var eyeTransform:simd_float4x4?
+    private var eyeTransform:simd_float4x4 = matrix_identity_float4x4
     
     lazy var deviceSize: simd_float2 = {
         let px = UIScreen.main.nativeBounds.size
@@ -47,22 +47,22 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         demoView.pointOfView?.simdPosition = simd_float3.zero
         
         addWalls()
-        addBricks()
+//        addBricks()
     }
     func addBricks() {
         let depth:Float = 0.2
         let box = SCNBox(width: 1, height: 1, length: 1, chamferRadius: 0)
         box.firstMaterial?.diffuse.contents = UIImage(named: "texture")
-        
-//        for i in 0..<3 {
-//            for j in 0..<5 {
-//                let brick = SCNNode(geometry: box)
-//                brick.name = "\(i),\(j)"
-//                brick.simdScale = simd_float3(0.01, 0.01, 0.02*Float(i))
-//                brick.simdPosition = simd_float3(-deviceSize.x*0.5, 0, (0.02-depth)*0.5)
-//                demoView.scene?.rootNode.addChildNode(brick)
-//            }
-//        }
+
+        for i in 0..<3 {
+            for j in 0..<5 {
+                let brick = SCNNode(geometry: box)
+                brick.name = "\(i),\(j)"
+                brick.simdScale = simd_float3(0.01, 0.01, 0.02*Float(i))
+                brick.simdPosition = simd_float3(-deviceSize.x*0.5, 0, (0.02-depth)*0.5)
+                demoView.scene?.rootNode.addChildNode(brick)
+            }
+        }
     }
     func addWalls() {
         let depth:Float = 0.2
@@ -112,8 +112,8 @@ class ViewController: UIViewController, ARSCNViewDelegate {
 
     // MARK: - ARSCNViewDelegate
     func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
-        if renderer === demoView, let perspectiveM = perspectiveM, let eyeT = eyeTransform {
-            demoView.pointOfView?.simdTransform = eyeT
+        if renderer === demoView, let perspectiveM = perspectiveM {
+            demoView.pointOfView?.simdTransform = eyeTransform
             demoView.pointOfView?.camera?.projectionTransform = perspectiveM
         }
     }
@@ -130,27 +130,26 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         return node
     }
     func renderer(_ renderer: SCNSceneRenderer, didUpdate node: SCNNode, for anchor: ARAnchor) {
-        guard let phoneT = renderer.pointOfView?.simdTransform, let faceAnchor = anchor as? ARFaceAnchor else {
+        guard let phoneNode = renderer.pointOfView, let faceAnchor = anchor as? ARFaceAnchor else {
             return
         }
-        let eyeT = faceAnchor.transform * matrix_float4x4(simd_quatf(angle: Float.pi, axis: SIMD3<Float>(0, 1, 0)))
         
-        let phoneTInEye = eyeT.inverse * phoneT
+        let q =  simd_float4x4(simd_quatf(angle: Float.pi, axis: SIMD3<Float>(0, 1, 0)))
+        eyeTransform = phoneNode.simdTransform.inverse * q.inverse * faceAnchor.transform * q
         
-        let faceInPhone = (phoneT.inverse * faceAnchor.transform).columns.3
-        let near = -faceInPhone.z
+        let deviceCamPos = eyeTransform.inverse * simd_float4(phoneNode.simdPosition, 1)
+        let fwd = eyeTransform.inverse * simd_float4(phoneNode.simdWorldFront, 0)
+        let close = dot(simd_float3(deviceCamPos.x, deviceCamPos.y, deviceCamPos.z), simd_float3(fwd.x, fwd.y, fwd.z))
+        let near:Float = close
         
-        let phonePInEye = phoneTInEye.columns.3
         let scaleNear:Float = 0.01
         let scaleFactor:Float = scaleNear/near
-        let left = (phonePInEye.x-deviceSize.x*0.5)*scaleFactor
-        let right = (phonePInEye.x+deviceSize.x*0.5)*scaleFactor
-        let bottom = (phonePInEye.y-deviceSize.y)*scaleFactor
-        let top = (phonePInEye.y+0)*scaleFactor
+        let left = (deviceCamPos.x-deviceSize.x*0.5)*scaleFactor
+        let right = (deviceCamPos.x+deviceSize.x*0.5)*scaleFactor
+        let bottom = (deviceCamPos.y-deviceSize.y)*scaleFactor
+        let top = (deviceCamPos.y+0)*scaleFactor
         
         perspectiveM = SCNMatrix4(perspectiveOffCenter(left:left, right:right, bottom:bottom, top:top, near: scaleNear, far: 10))
-        eyeTransform = phoneT * matrix_float4x4(simd_quatf(angle: Float.pi, axis: SIMD3<Float>(0, 1, 0)))
-        eyeTransform?.columns.3 = phonePInEye
     }
     
     func session(_ session: ARSession, didFailWithError error: Error) {
