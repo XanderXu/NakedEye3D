@@ -113,7 +113,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     // MARK: - ARSCNViewDelegate
     func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
         if renderer === demoView, let perspectiveM = perspectiveM {
-            demoView.pointOfView?.simdTransform = eyeTransform
+//            demoView.pointOfView?.simdTransform = eyeTransform
             demoView.pointOfView?.camera?.projectionTransform = perspectiveM
         }
     }
@@ -135,10 +135,13 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         }
         
         let q =  simd_float4x4(simd_quatf(angle: Float.pi, axis: SIMD3<Float>(0, 1, 0)))
-        eyeTransform = phoneNode.simdTransform.inverse * q.inverse * faceAnchor.transform * q
+        let frontCamT = phoneNode.simdTransform * q
+        let faceT = faceAnchor.transform * q
+        
+        eyeTransform.columns.3 = (frontCamT.inverse * faceT).columns.3
         
         let deviceCamPos = eyeTransform.inverse * simd_float4(phoneNode.simdPosition, 1)
-        let fwd = eyeTransform.inverse * simd_float4(phoneNode.simdWorldFront, 0)
+        let fwd = eyeTransform.inverse * simd_float4(-phoneNode.simdWorldFront, 0)
         let close = dot(simd_float3(deviceCamPos.x, deviceCamPos.y, deviceCamPos.z), simd_float3(fwd.x, fwd.y, fwd.z))
         let near:Float = close
         

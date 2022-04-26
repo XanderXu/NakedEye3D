@@ -1,16 +1,16 @@
 PODS:
-  - DeviceKit (4.2.1)
+  - DeviceKit (4.6.0)
 
 DEPENDENCIES:
   - DeviceKit
 
 SPEC REPOS:
-  trunk:
+  https://github.com/CocoaPods/Specs:
     - DeviceKit
 
 SPEC CHECKSUMS:
-  DeviceKit: cadb5ff25d45fe186778bf2d0fd2ea4750542189
+  DeviceKit: 834dd8aa1be53cd85364d8f49aa5d98bfac397c4
 
-PODFILE CHECKSUM: 1b99e2f34cf815be77514d4c871b20ab2e107996
+PODFILE CHECKSUM: ec43ddca54ed2480918a939660660db57b74bca5
 
-COCOAPODS: 1.9.3
+COCOAPODS: 1.9.1
