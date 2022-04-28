@@ -47,7 +47,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         demoView.pointOfView?.simdPosition = simd_float3.zero
         
         addWalls()
-//        addBricks()
+        addBricks()
     }
     func addBricks() {
         let depth:Float = 0.2
@@ -59,7 +59,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
                 let brick = SCNNode(geometry: box)
                 brick.name = "\(i),\(j)"
                 brick.simdScale = simd_float3(0.01, 0.01, 0.02*Float(i))
-                brick.simdPosition = simd_float3(-deviceSize.x*0.5, 0, (0.02-depth)*0.5)
+                brick.simdPosition = simd_float3(deviceSize.x*(Float(i)/2-0.5), deviceSize.y*(Float(j)/4-0.5), depth*0.5)
                 demoView.scene?.rootNode.addChildNode(brick)
             }
         }
@@ -72,25 +72,25 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         let left = SCNNode(geometry: box)
         left.name = "left"
         left.simdScale = simd_float3(0.01, deviceSize.y, depth)
-        left.simdPosition = simd_float3(-deviceSize.x*0.5, 0, -depth*0.5)
+        left.simdPosition = simd_float3(-deviceSize.x*0.5, 0, depth*0.5)
         demoView.scene?.rootNode.addChildNode(left)
         
         let right = SCNNode(geometry: box)
         right.name = "right"
         right.simdScale = simd_float3(0.01, deviceSize.y, depth)
-        right.simdPosition = simd_float3(deviceSize.x*0.5, 0, -depth*0.5)
+        right.simdPosition = simd_float3(deviceSize.x*0.5, 0, depth*0.5)
         demoView.scene?.rootNode.addChildNode(right)
         
         let top = SCNNode(geometry: box)
         top.name = "top"
         top.simdScale = simd_float3(deviceSize.x, 0.01, depth)
-        top.simdPosition = simd_float3(0, deviceSize.y*0.5, -depth*0.5)
+        top.simdPosition = simd_float3(0, deviceSize.y*0.5, depth*0.5)
         demoView.scene?.rootNode.addChildNode(top)
         
         let bottom = SCNNode(geometry: box)
         bottom.name = "bottom"
         bottom.simdScale = simd_float3(deviceSize.x, 0.01, depth)
-        bottom.simdPosition = simd_float3(0, -deviceSize.y*0.5, -depth*0.5)
+        bottom.simdPosition = simd_float3(0, -deviceSize.y*0.5, depth*0.5)
         demoView.scene?.rootNode.addChildNode(bottom)
     }
     override func viewWillAppear(_ animated: Bool) {
@@ -113,7 +113,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     // MARK: - ARSCNViewDelegate
     func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
         if renderer === demoView, let perspectiveM = perspectiveM {
-//            demoView.pointOfView?.simdTransform = eyeTransform
+            demoView.pointOfView?.simdTransform = eyeTransform
             demoView.pointOfView?.camera?.projectionTransform = perspectiveM
         }
     }
